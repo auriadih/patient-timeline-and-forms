@@ -4,7 +4,7 @@
 
 A timeline view of patient events in health care, with dynamic forms on the side
 
-![Patient timeline](screenshots/timeline.png?raw=true "Patient timeline")
+![Patient timeline](../../screenshots/timeline.png?raw=true "Patient timeline")
 
 ## Repository still missing some bits
 
