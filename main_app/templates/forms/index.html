@@ -1,0 +1,94 @@
+<h3>Tee uusi kirjaus:</h3>
+<div id="form_buttons"></div>
+
+<script>
+var FormButtons = {{ forms|safe }}
+var ButtonTargets = {{ destination|tojson|safe }}
+var FormIds = {{ form_id|safe }}
+
+/* define variables */
+var Links = ''
+var Butns, Child
+
+/* Loop for generating link buttons */
+for (var i = 0; i < FormButtons.length; i++) {
+  Links += "<a class='janat"
+  if (ButtonTargets[i] === true) { Links += ' formlink' }
+  Links += "'"
+  Links += 'id=' + FormButtons[i] + " href='aikajana'>"
+  Links += "<button type='button' id='" + FormIds[i] + "' class='btn"
+  if (ButtonTargets[i] === false) { Links += ' btn-primary' } else if (ButtonTargets[i] === true) { Links += ' btn-info' }
+  Links += " btn-lg'>" + FormButtons[i] + '</button></a>'
+}
+
+/* Populate buttons to users home page */
+Butns = document.getElementById('form_buttons')
+Butns.innerHTML += Links
+
+$(document).ready(function () {
+  $('a.janat').on('click', function (event) {
+    event.preventDefault()
+    Child = $(event.target).text()
+    ChildId = $(this).find('button').attr('id')
+
+    /* Actual POST */
+    $.post('_child', { 'child': Child, 'child_id': ChildId }).done(function (ChildSelected) {
+      if ($(event.target).closest('a').hasClass('formlink')) {
+        window.location = 'lomake/' + $(event.target).closest('button').attr('id')
+      } else {
+        window.location = 'aikajana'
+      }
+    }).fail(function () { window.alert('Jotakin meni pieleen kirjauksessa') })
+  })
+
+  /* check if form has already been answered */
+  $.get('_checkanswers').done(function (Data) {
+    if (Data['forms'].length > 0) {
+      var DbAnsweredForms = Data['forms']
+      for (var i = 0; i < DbAnsweredForms.length; i++) {
+        $('button[id=' + DbAnsweredForms[i].form_id + ']').removeClass('btn-info').addClass('btn-success')
+      }
+    }
+  })
+
+  /* loop through buttons that are identified as form opening buttons, not timeline buttons */
+  $('.formlink').find('button').each(function () {
+    var _thjis = $(this)
+
+    /* check privileges to insert, view or modify form */
+    $.post('_check', { 'id': $(this).attr('id') }).done(function (Privileges) {
+      /* disable button if user has no rights to fill it up */
+      if (Privileges['insert_privilege'] === false) {
+        $(_thjis).addClass('no-can-do').addClass('disabled')
+      }
+
+      /* if form has already been answered and user has rights to view or modify filled answers */
+      if ($(_thjis).hasClass('btn-success') & (Privileges['view_privilege'] === true | Privileges['modify_privilege'] === true)) {
+        $(_thjis).attr('data-placement', 'bottom').attr('data-content', "<a href='#' class='tooltip-link' rel='" + $(_thjis).html() + "' id='" + $(_thjis).attr('id') + "'><button class='btn btn-success btn-sm tooltip-btn'>Täytetyt lomakkeet</button></a>")
+      }
+
+      /* Add tooltips to form buttons if not fillable */
+      $('.formlink').find('button').each(function () {
+        if ($(_thjis).hasClass('no-can-do')) {
+          $(_thjis).tooltip({placement: 'top', title: 'Et voi täyttää enää tätä lomaketta'})
+        }
+      })
+
+      /* activate popovers to form buttons */
+      $('.formlink > button').popover({html: true, delay: {show: 500, hide: 500}, trigger: 'manual'}).on('mouseenter', function () {
+          var _this = this
+          $(this).popover('show')
+          $('.popover').on('mouseleave', function () { $(_this).popover('hide') })
+          $('.tooltip-link').on('click', function () { window.location.href = 'listaus/' + $(this).attr('id') })
+        }).on('mouseleave', function () {
+          var _this = this;
+          setTimeout(function () { if (!$('.popover:hover').length) { $(_this).popover('hide') } }, 100)
+        })
+
+      /* activate tooltips */
+      $("[rel='tooltip']").tooltip()
+      $("[rel='tooltip-button']").tooltip({ html: true, delay: {show: 300, hide: 100} })
+    })
+  })
+})
+</script>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Laaturekisteri</title>
+
+  <!-- JQuery -->
+  <script src="{{ url_for('static', filename='js/jquery-3.3.1.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
+
+  <!-- Bootstrap -->
+  <script src="{{ url_for('static', filename='js/popper.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+  <link href="{{ url_for('static', filename='css/bootstrap4.css') }}" rel="stylesheet">
+
+  <!-- Styling -->
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='js/fontawesome-all.js') }}"></script>
+  <link href="//fonts.googleapis.com/css?family=Inconsolata|Fira+Mono|Montserrat" rel="stylesheet" type="text/css">
+
+  <!-- Tooltips -->
+  <script src="{{ url_for('static', filename='js/tooltip.js') }}"></script>
+  {% block head %}{% endblock %}
+</head>
+
+<body>
+  <!-- navigation bar, on top of page -->
+  <nav class="navbar navbar-expand-md navbar-light bg-light fixed-top" id="topnav">
+    <div class="collapse navbar-collapse">
+
+      <!-- top-left navigation -->
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.homepage') }}">Etusivu</a></li>
+
+        {% if current_user.is_authenticated %}
+        {% if user_group == "3" %} <!-- hard-coded urologist -->
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('main.report_wrapper') }}">Raportit</a></li>
+        {% endif %}
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.patient') }}">{% if not patient %}Valitse potilas{% else %}Vaihda potilas{% endif %}</a></li>
+
+        {% block navi %}{% endblock %}
+
+        {% endif %}
+      </ul>
+
+      <!-- top-right navigation -->
+      <ul class="navbar-nav">
+        {% if current_user.is_authenticated %}
+        <li class="nav-item">
+          <i class="fa fa-user"></i>  Hei, {{ current_user.first_name }}!
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Kirjaudu ulos</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.login') }}">Kirjaudu sisään</a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <!-- content wrapper: all sub-pages are displayed here -->
+  <div class="wrapper">
+    <div class="contents">
+      {% if patient %}
+        {% if demographics_access %}
+        <div class="row" id="demographics">
+          <!-- Show info about selected patient -->
+          <div class="col-md-4">
+            <div class="col-md-12 pat-demo">
+              <h5>{{ patient }}</h5>
+              <h5>{% if etu %} {{ etu }} {% endif %} {% if suku %} {{ suku }} {% endif %}</h5>
+              <h5>Ikä: {{ ika }}{% if kuollut %} (<img src="{{ url_for('static', filename='img/icons/Christian_Cross_icon.svg') }}" class='scaled-icon' alt='Exitus'/> {{ kuollut }}) {% endif %}</h5>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <!--<div class="col-md-12 pat-demo" id="kantatiedot">
+              
+            </div>-->
+
+            <!--<div class="card-deck">
+              <div class="card bg-light mb-3">
+                <div class="card-header">Gleason</div>
+                <div class="card-body">
+                  <p class="card-text">5</p>
+                </div>
+              </div>
+              <div class="card bg-light mb-3">
+                <div class="card-header">cT/pT</div>
+                <div class="card-body">
+                  <p class="card-text">5</p>
+                </div>
+              </div>
+              <div class="card bg-light mb-3">
+                <div class="card-header">cN/pN</div>
+                <div class="card-body">
+                  <p class="card-text">5</p>
+                </div>
+              </div>
+              <div class="card bg-light mb-3">
+                <div class="card-header">Kirurginen marginaali</div>
+                <div class="card-body">
+                  <p class="card-text">5</p>
+                </div>
+              </div>
+              <div class="card bg-light mb-3">
+                <div class="card-header">CAPRA / CAPRA-S</div>
+                <div class="card-body">
+                  <p class="card-text">5</p>
+                </div>
+              </div>
+            </div>-->
+          </div>
+                    
+        </div>
+          <!-- Show patient related detailed info (place-holder) -->
+          <!--<div class="col-md-6">
+            <div class="col-md-12 pat-demo" id="kantatiedot">
+                <div class="card bg-light mb-3" style="margin-top: 0.5rem; max-width: 10rem;">
+                  <div class="card-header" style="padding: 0 0 0 0.5rem;">Gleason</div>
+                  <div class="card-body" style="padding: 0rem;">
+                    <p class="card-text">5</p>
+                    <small class="text-muted">Last updated 3 mins ago</small>
+                  </div>
+                </div>
+              <h5>Gleason-luokka</h5>
+              <h5>cT/pT-luokka</h5>
+              <h5>cN/pN-luokka</h5>
+              <h5>kirurginen marginaali</h5>
+              <h5>CAPRA / CAPRA-S</h5>
+            </div>
+          </div>
+        </div>-->
+        {% endif %}
+      {% endif %}
+
+      {% block contents %}{% endblock %}
+    </div>
+  </div>
+
+  <!-- navigation bar, on bottom of page -->
+  <nav class="navbar navbar-expand-md navbar-light bg-light fixed-bottom">
+    <div class="collapse navbar-collapse">
+
+      {% if current_user.is_authenticated %}
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.homepage') }}">Etusivu</a></li>
+      </ul>
+      {% else %}
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
+      </ul>
+      {% endif %}
+
+    </div>
+  </nav>
+</body>
+</html>
+
+{% block scripts %}{% endblock %}
+
+<script>
+
+/*var Col, Table, TableHead, Tr, Th, TabCell, DivContainer*/
+
+/*
+    'field_id': fields.String,
+		'field_name': fields.String,
+		'choice_name': fields.String,
+		'open_ts': fields.DateTime
+*/
+
+/*$(document).ready(function () {
+  $.get('./_demoanswers').done(function (ReturnedForm) {
+    if (ReturnedForm['answers'].length) {
+      $('#kantatiedot').css('display', 'block')
+    }
+
+    Col = ['field_id', 'field_name', 'choice_name', 'open_ts']*/
+
+    /* create table object */
+    /*Table = document.createElement('table')
+    Table.setAttribute('class', 'table table-sm borderless')*/
+
+    /* add returned data to the table */
+    /*for (var k = 0; k < ReturnedForm['answers'].length; k++) {
+      Tr = Table.insertRow(-1)
+      for (var m = 0; m < Col.length; m++) {
+        TabCell = Tr.insertCell(-1)
+        TabCell.innerHTML = ReturnedForm['answers'][k][Col[m]]
+      }
+    }*/
+
+    /* insert table object to the page */
+    /*DivContainer = document.getElementById('kantatiedot')
+    DivContainer.innerHTML = ''
+    DivContainer.appendChild(Table)
+  })
+})*/
+
+</script>

@@ -1,0 +1,53 @@
+
+<h3>Aiemmat tallennetut lomakkeet:</h3>
+
+<div class="row" id="answer_container">
+  {% if err %}
+    <h4>Virhe: {{ err }}</h4>
+  {% else %}
+    <div id="answers"></div>
+  {% endif %}
+</div>
+
+<script>
+var Col, Heads, Table, TableHead, Tr, Th, TabCell, DivContainer
+var FormId = window.location.pathname.split('/').reverse()[0]
+
+$.get('_vastattu').done(function (ReturnedForm) {
+  Col = ['form_fullname', 'open_ts', 'save_ts']
+  Heads = ['Lomake', 'Avattu', 'Tallennettu']
+
+  /* create table object */
+  Table = document.createElement('table')
+  Table.setAttribute('class', 'table table-sm borderless')
+
+  TblHead = document.createElement('thead')
+  HeadRow = document.createElement('tr')
+  Heads.forEach((Head) => {
+    let th = document.createElement('th');
+    th.appendChild(document.createTextNode(Head));
+    HeadRow.appendChild(th);
+  });
+  TblHead.append(HeadRow)
+  Table.appendChild(TblHead)
+
+  /* add returned data to the table */
+  for (var k = 0; k < ReturnedForm.length; k++) {
+    Tr = Table.insertRow(-1)
+    Tr.setAttribute('id', ReturnedForm[k]['answer_set_id'])
+    for (var m = 0; m < Col.length; m++) {
+      TabCell = Tr.insertCell(-1)
+      TabCell.innerHTML = ReturnedForm[k][Col[m]].replace('|', ' - ')
+    }
+  }
+
+  /* insert table object to the page */
+  DivContainer = document.getElementById('answer_container')
+  DivContainer.innerHTML = ''
+  DivContainer.appendChild(Table)
+
+  $('div.wtf_form').each(function () {
+    $(this).find('table').addClass('table table-sm table-bordered')
+  })
+})
+</script>

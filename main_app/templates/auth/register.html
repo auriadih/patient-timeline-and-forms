@@ -1,0 +1,13 @@
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% extends "base.html" %}
+
+{% block contents %}
+<div class="entryfields">
+  <div class="login-details">
+    <h1>Rekisteröi uusi tili</h1>
+    <br/>
+    {{ wtf.quick_form(reg) }}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% import "bootstrap/utils.html" as utils %}
+
+{% extends "base.html" %}
+
+{% block contents %}
+<div class="center">
+  <div class="intro-message">
+
+    {% if current_user.is_authenticated %}
+      <h1>Käyttäjän {{ current_user.first_name }} {{ current_user.last_name }} toiminnot</h1>
+    {% else %}
+      <h1>Laaturekisteri</h1>
+    {% endif %}
+
+    <hr class="intro-divider">
+
+    {% if current_user.is_authenticated %}
+      {% if patient %}
+        {% include 'forms/index.html' %}
+        {% if session['sees_filled_forms'] %}
+          <hr class="intro-divider">
+        {% include 'forms/lista.html' %}
+        {% endif %}
+      {% else %}
+        <a href="{{ url_for('auth.patient') }}"><button type="button" id='patient' class='btn btn-default btn-lg'><h4>Valitse potilas</h4></button></a>
+      {% endif %}
+    {% else %}
+      <p>Kirjaudu sisään käyttääksesi sivuston toimintoja.</p>
+    {% endif %}
+    <hr class="intro-divider">
+  </div>
+</div>
+
+{% endblock %}

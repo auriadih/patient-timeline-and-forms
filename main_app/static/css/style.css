@@ -1,0 +1,550 @@
+/****** Main style ******/
+
+body, html {
+  width: 100%;
+  /*background: url('../img/bg/groovepaper_@2X.png') repeat 0 0;*/
+  background: #2365B2;
+}
+
+body, h1, h2, h3, h4, h5 {
+  /*font-family: 'Inconsolata', 'Fira Mono', monospace;*/
+  font-family: 'Montserrat', regular;
+  font-weight: 600;
+  color: #606060;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+h1, h2, h3 {
+  text-shadow: 1px 1px 1px #ccc;
+}
+
+/* this div on base.html takes all subpages within */
+.wrapper {
+  min-height: 80%;
+  height: auto !important;
+  margin-top: -2em;
+  margin-left: 40px;
+  margin-right: 40px;
+  margin-bottom: 2em;
+}
+
+.container {
+  overflow-y: hidden;
+}
+
+div#answers, div#buttons {
+  display: block;
+  margin: auto;
+}
+.borderless td, .borderless th {
+    border: none;
+}
+
+.contents {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: url('../img/bg/groovepaper.png') repeat 0 0;
+  margin-top: 70px;
+  margin-bottom: 70px;
+  border-radius: 15px;
+}
+
+#perustiedot {
+  padding-bottom: 30px;
+}
+
+#kantatiedot {
+  display: none;
+}
+
+div.cards {
+  margin-top: 0.5rem;
+}
+div.card-header {
+  padding: 0 0 0 0.5rem;
+}
+div.card-body {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.5rem;
+}
+
+div.pat-demo {
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 5px;
+}
+
+nav#topnav .nav-item {
+  padding-left: 5px;
+  padding-right: 5px;
+  /*font-size: 24px;*/
+}
+
+nav#topnav .nav-link {
+  padding: 0;
+}
+
+span.nav-text {
+  padding-left: 15px;
+}
+
+nav.navbar.navbar-expand-md.navbar-light {
+  padding-bottom: 0px;
+  padding-top: 0px;
+}
+
+
+/****** Login main style ******/
+
+div.error {
+  padding-top: 15px;
+}
+
+
+
+/****** Confirmation page ******/
+
+div.center {
+  text-align: center;
+}
+
+
+/****** Buttons ******/
+
+.btn, .btn-sm, .btn-xs, input#cancel {
+  margin-left: 3px;
+  margin-right: 3px;
+  margin-bottom: 6px;
+}
+
+.btn-default {
+  /*color: rgba(50, 160, 0, 0.9);*/
+  border-color: rgba(10, 120, 0, 0.8);
+  background-color: rgba(90, 200, 0, 0.2);
+}
+
+.btn-default:hover {
+  background-color: rgba(240, 200, 0, 0.5);
+}
+
+.btn-sm#cancel {
+  background-color: rgba(255, 165, 0, 0.6);
+  border-color: rgba(255, 140, 0, 0.6);
+}
+
+.form_buttons a {
+  display: inline-block;
+}
+
+input#save:hover {
+  background-color: rgba(90, 200, 0, 0.7);
+}
+input#cancel:hover {
+  background-color: rgba(255, 0, 0, 0.7);
+}
+
+
+
+
+
+/* Styles for forms */
+
+div#custom_form {
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin: 0 auto;
+  width: 85%;
+  border: 0px;
+  border-radius: 6px;
+  background: #ccdff5;
+}
+
+form {
+  width: 100%;
+}
+
+.form-group.required > label:after {
+  color: red;
+  font-size: 16px;
+  content: " *";
+}
+
+.form-control {
+  display: inline-block;
+  list-style: none;
+}
+
+.conditional-field {
+  margin-top: 15px;
+}
+
+.list-unstyled label, .list-unstyled input {
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-bottom: 0;
+}
+
+label.control-label {
+  display: block;
+}
+
+ul.form-control[orientation='horizontal'] > li {
+  display: inline-block;
+  text-align: center;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+ul.form-control[orientation='vertical'] {
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+input[type="radio"], input[type="checkbox"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  border: 2px solid #999;
+  width: 14px;
+  height: 14px;
+
+  position: relative;
+  top: 2px;
+
+  margin-right: 5px;
+}
+
+input[type="radio"] {
+  border-radius: 50%;
+}
+
+input:checked {
+  border: 6px solid #2365B2;
+}
+
+/* Field tooltips */
+img.scaled-icon {
+  padding-left: 5px;
+  padding-top: 3px;
+  height: 19px;
+  opacity: 0.6;
+}
+div.tooltip {
+  position: fixed;
+  overflow: visible;
+}
+.tooltip-inner {
+  max-width: 400px;
+  line-break: auto;
+  text-align: left;
+}
+
+.popover-body {
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 8px;
+  padding-bottom: 3px;
+}
+
+
+
+
+
+
+
+
+/****** Timeline ******/
+
+#timeline {
+  margin-bottom: 20px;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.timeline-container, .answer-container {
+  margin: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+  padding-bottom: 60px;
+  width: 100%;
+}
+
+/* Placeholder for loading animation */
+.loader {
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 15px;
+}
+
+/* Loading animation */
+.spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 2s linear infinite;
+}
+
+/* Function to animate */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* prevent text showing inside of event box */
+div.timeline-event-box .timeline-event-content,
+div.timeline-event.timeline-event-range.timeline-event-cluster .timeline-event-content {
+  /*display: none;*/
+  font-weight: 600;
+  font-size: 11px;
+  /*font-size: 1.05vmin; /* 0.75vw */
+  /*transform: rotate(-45deg);*/
+  padding-top: 4px;
+}
+div.timeline-event-cluster .timeline-event-content,
+div.timeline-event.timeline-event-range.timeline-event-cluster .timeline-event-content {
+  display: block;
+  font-size: 14px;
+  padding-top: 2px;
+}
+
+/* hide specific intended-to-be-hidden groups (for forcing group rows to be shown with no events) */
+div.timeline-event.hidden_groups {
+  display: none;
+}
+
+/* Timeline x-axis markers */
+div.timeline-event.timeline-event-dot {
+  border-color: rgba(120, 120, 120, 0.5);
+  background-color: rgba(70, 70, 70, 1);
+}
+
+/* Timeline lines from x-axis marker to item */
+div.timeline-event.timeline-event-line {
+  border-width: 2px;
+  border-color: rgba(170, 170, 170, 0.5);
+  background-color: rgba(210, 210, 210, 1);
+}
+
+/* Timeline x-axis markers for selected item */
+div.timeline-event.timeline-event-dot.timeline-event-selected {
+  border-color: rgba(255, 215, 0, 0.5);
+  background-color: rgba(255, 165, 0, 1);
+}
+
+/* Timeline lines from x-axis marker to item for selected item */
+div.timeline-event.timeline-event-line.timeline-event-selected {
+  border-color: rgba(255, 215, 0, 0.5);
+  background-color: rgba(255, 165, 0, 0.5);
+}
+
+/* Individual items on timeline (box) */
+div.timeline-event.timeline-event-box, div.timeline-event.timeline-event-range {
+  min-width: 25px !important;
+  padding-top: 2px;
+  padding-left: 1px;
+  padding-right: 1px;
+  height: 30px !important;
+  border-width: 2px;
+  border-color: #b0b0b0;
+  border-radius: 5px;
+  background-color: #d9d9d9;
+  margin-left: -2px;
+  text-align: center;
+}
+div.timeline-event.timeline-event-range.timeline-event-cluster {
+  width: fit-content !important;
+  /*min-width: 20px !important;*/
+  background-color: #b0b0b0;
+  /*margin-left: -10px;
+  margin-right: -10px;*/
+  text-align: center;
+}
+div.timeline-event.timeline-event-box {
+  max-width: 25px !important;
+}
+
+/* Individual selected item border color */
+div.timeline-event.timeline-event-box.timeline-event-selected,
+div.timeline-event.timeline-event-range.timeline-event-selected {
+  border-color: rgba(255, 215, 0, 1);
+}
+
+/* Individual item box size */
+/*div.timeline-event.timeline-event-box .timeline-event-content {
+  min-width: 20px !important;
+  height: 20px !important;
+}
+div.timeline-event.timeline-event-range {
+  min-width: 25px !important;
+}*/
+
+/* Individual items on timeline (dot) */
+div.timeline-event .timeline-event-dot {
+  background-color: #000000;
+}
+
+/* Item 'className' icons */
+div.timeline-event.timeline-event-box.labra, button#labra {
+  background: url('../img/icons/Test_tube_icon.svg') no-repeat center;
+  background-size: contain;
+  background-color: hsla(209, 61%, 92%, 1);
+  border-color: hsla(209, 61%, 72%, 1);
+}
+div.timeline-event.timeline-event-box.kuvantamistutkimus, button#kuvantamistutkimus {
+  background: url('../img/icons/X-Ray_-_The_Noun_Project2-thick.svg') no-repeat center;
+  background-size: contain;
+  background-color: hsla(60, 100%, 80%, 1);
+  border-color: hsla(60, 100%, 40%, 1);
+}
+div.timeline-event.timeline-event-box.kuvantamistutkimus.unit {
+  background: none;
+  background-color: hsla(60, 100%, 80%, 1);
+  border-color: hsla(60, 100%, 40%, 1);
+}
+div.timeline-event.timeline-event-box.käynti, button#käynti {
+  background: url('../img/icons/Stethoscope_font_awesome.svg') no-repeat center;
+  background-size: contain;
+  background-color: hsla(110, 48%, 83%, 1);
+  border-color: hsla(110, 48%, 53%, 1);
+}
+div.timeline-event.timeline-event-box.käynti.unit {
+  background: none;
+  background-color: hsla(110, 48%, 83%, 1);
+  border-color: hsla(110, 48%, 53%, 1);
+}
+div.timeline-event.timeline-event-box.osastohoito,
+div.timeline-event.timeline-event-range.osastohoito, button#osastohoito {
+  background: url('../img/icons/Public_health_icon_-_Noun_Project_6435.svg') no-repeat center;
+  background-size: auto 25px;
+  background-color: hsla(0, 0%, 85%, 1);
+  border-color: hsla(0, 0%, 55%, 1);
+}
+div.timeline-event.timeline-event-box.lääkitys, button#lääkitys {
+  background: url('../img/icons/McCormick_Pills.svg') no-repeat center;
+  background-size: contain;
+  background-color: hsla(299, 32%, 62%, 1);
+  border-color: hsla(299, 32%, 42%, 1);
+}
+div.timeline-event.timeline-event-box.sädehoito,
+div.timeline-event.timeline-event-range.sädehoito, button#sädehoito {
+  background: url('../img/icons/Radiation_warning_symbol2.svg') no-repeat center;
+  background-size: auto 25px;
+  background-color: hsla(30, 100%, 50%, 1);
+  border-color: hsla(30, 100%, 30%, 1);
+}
+div.timeline-event.timeline-event-box.sytostaattihoito,
+div.timeline-event.timeline-event-range.sytostaattihoito, button#sytostaattihoito {
+  background: url('../img/icons/Toicon-icon-sharp-corners-inject.svg') no-repeat center;
+  background-size: auto 25px;
+  background-color: hsla(329, 89%, 90%, 1);
+  border-color: hsla(329, 89%, 70%, 1);
+}
+div.timeline-event.timeline-event-box.lähete, button#lähete {
+  background: url('../img/icons/Aiga_mail.svg') no-repeat center;
+  background-size: contain;
+  background-color: hsla(42, 60%, 68%, 1);
+  border-color: hsla(42, 60%, 38%, 1);
+}
+div.timeline-event.timeline-event-box.leikkaus, button#leikkaus {
+  background: url('../img/icons/Scissors_icon_black.svg') no-repeat center;
+  background-size: contain;
+  background-color: hsla(359, 79%, 50%, 1);
+  border-color: hsla(359, 79%, 30%, 1);
+}
+
+div.timeline-event.timeline-event-box.patologia, button#patologia {
+  background: url('../img/icons/Microscope_icon_black_OCL.svg') no-repeat center;
+  background-size: contain;
+  background-color: hsla(205, 49%, 66%, 1);
+  border-color: hsla(205, 49%, 46%, 1);
+}
+div.timeline-event.timeline-event-box.lomake, button#lomake {
+  background: url('../img/icons/Checklist_Noun_project_5166.svg') no-repeat center;
+  background-size: contain;
+  background-color: hsla(71, 90%, 60%, 1);
+  border-color: hsla(71, 90%, 40%, 1);
+}
+
+/* Items are set "editable" to be able to change groups,
+   but we don't want to delete any, so lets hide delete button */
+div.timeline-navigation-delete {
+  display: none;
+}
+
+/* Item details */
+#tietoboksi {
+  width: 100%;
+  position: relative;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+}
+
+.slick-slide {
+  margin-left: 12px;
+  margin-right: 12px;
+}
+.slick-prev:before, .slick-next:before {
+  color:#2365B2 !important;
+}
+
+span.tietue {
+  border: 2px solid #505050;
+  border-radius: 5px;
+  background-color: #dcdcdc;
+  padding: 5px;
+}
+
+#tietoboksi .eventinfo_unit, #tietoboksi .eventinfo_main, #tietoboksi .eventinfo_text {
+  padding-bottom: 20px;
+}
+
+#tietoboksi .eventinfo_unit > table > tbody > tr > td,
+#tietoboksi .eventinfo_main > table > tbody > tr > td,
+#tietoboksi .eventinfo_text > table > tbody > tr > td,
+.eventinfo_tooltip > table > tbody > tr > td,
+.field_description > table > tbody > tr > td,
+.choice_description > table > tbody > tr > td {
+  vertical-align: top;
+}
+
+
+
+/****** Lab graph ******/
+
+.ui-autocomplete {
+  background-color: #FFFFFF;
+	background-position: top;
+  padding-left: 5px;
+  list-style: none;
+}
+
+input#labrat {
+  width: 280px;
+}
+
+.ui-menu {
+  width: 280px;
+}
+
+.ui-helper-hidden-accessible {
+  display: none;
+}
+
+#lab_visualization, #epic_visualization {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+#lab_visualization .vis-panel.vis-bottom, #epic_visualization .vis-panel.vis-bottom {
+  display: none;
+}
+
+#lab_visualization .vis-timeline, #epic_visualization .vis-timeline {
+  border-bottom: none;
+}
