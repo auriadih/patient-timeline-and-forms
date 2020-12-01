@@ -1,0 +1,53 @@
+{% import "bootstrap/utils.html" as utils %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% extends "base.html" %}
+
+{% block contents %}
+<div class="entryfields">
+  <div class="login-details">
+    <h1>{{ title }}</h1>
+    <br/>
+    {% if not err %}{{ wtf.quick_form(pot) }}{% endif %}
+  </div>
+  <div class="errors"></div>
+</div>
+
+<script>
+/* Function to check if patient is found from the database */
+function PatientSearch () {
+  $('div.errors').empty()
+
+  /* Fetch login form data */
+  var SubmittedSSN = $('form.form').serializeArray()
+
+  /* If POST to database is successful then do: */
+  $.post('_potilas', SubmittedSSN).done(function (PostReturn) {
+    if (PostReturn === true) {
+      /* Redirect to homepage */
+      window.location.href = "{{ url_for('main.homepage') }}"
+    } else {
+      $('div.errors').empty()
+      if (PostReturn[1]) {
+        $('div.errors').append('<h4>' + PostReturn[1] + '</h4>')
+      } else {
+        $('div.errors').append('<h4>Potilasta ei löydy tietokannasta.</h4>')
+      }
+    };
+  }).fail(function () {
+    $('div.errors').empty()
+    $('div.errors').append('<h4>Jotakin meni pieleen potilashaussa.</h4>')
+  })
+};
+
+/* Prevent submit button to reload page and try standard POST */
+$('form').submit(function (e) {
+  e.preventDefault()
+})
+
+/* Alter login form submit button function to prevent default page reload */
+$(window).on('load', function () {
+  $('form.form').attr('onsubmit', 'PatientSearch();')
+})
+</script>
+{% endblock %}

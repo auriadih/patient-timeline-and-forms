@@ -1,0 +1,60 @@
+{% import "bootstrap/wtf.html" as wtf %}
+
+<!-- Contents -->
+<div class="form_contents">
+  <div class="row" id="custom_form">
+    {% if err %}
+      <h4>Virhe: {{ err }}</h4>
+    {% else %}
+      {{ wtf.quick_form(form) }}
+    {% endif %}
+  </div>
+</div>
+
+<script>
+$(document).ready(function () {
+  if (document.referrer.indexOf('/aikajana') > -1) {
+    $('form.form').append("<a href='/aikajana' class='formlink' id='goback'><button type='button' id='cancel' class='btn btn-default'>Peruuta</button></a>")
+  }
+
+  /* Make radio buttons horizontal while retaining checkboxes vertical */
+  if ($('ul.form-control li input[type=radio]')) {
+    $('ul.form-control').find('input[type=radio]').after('<br>')
+    $('ul.form-control').each(function () {
+      ItemCount = $(this).find('li input[type=radio]').length
+      EqualWidth = $('div.form_contents').width() / ItemCount
+      $('ul#' + $(this).attr('id') + '.form-control li').css('max-width', EqualWidth)
+    })
+    $('ul.form-control li input[type=radio]').parent().parent().removeClass().addClass('list-unstyled horizontal').after('<br>').css('display', 'inline-block')
+  }
+
+  /* Indent descendand fields dynamically */
+  var fields = $('select.form-control, input.form-control, ul.list-unstyled')
+  var indentation, width, factor
+  for (i = 0; i < fields.length; i++) {
+    factor = $(fields[i]).attr('indent-level')
+    if (factor) {
+      indentation = factor * 5 + '%'
+      width = 100 - factor * 5 + '%'
+      $('select.form-control[indent-level="' + factor + '"]').closest('div.form-group').css('margin-left', indentation).css('width', width)
+    }
+  }
+
+  $('select, input[type=radio]').on('change', function (event) {
+    /* Prevent default action for selecting item from drop-down */
+    event.preventDefault()
+
+    /* Which field triggered conditional field */
+    FieldId = $(this).attr('id')
+    if ($(this)[0].nodeName.toLowerCase() === 'select') {
+      SelectedItem = $('select#' + FieldId + '.form-control').val()
+      DeterminingField = $(this).parent()
+    }
+    else if ($(this)[0].nodeName.toLowerCase() === 'input') {
+      SelectedItem = $('input#' + FieldId).val()
+      DeterminingField = $('input#' + FieldId).parent().parent().parent()
+    }
+    FieldId = FieldId.split('-')[0]
+  })
+})
+</script>

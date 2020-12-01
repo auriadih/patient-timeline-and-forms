@@ -1,0 +1,86 @@
+{% import "bootstrap/utils.html" as utils %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% extends "base.html" %}
+
+{% block contents %}
+<!-- Contents -->
+<div class="row" id="answer_container">
+  {% if err %}
+    <h4>Virhe: {{ err }}</h4>
+  {% else %}
+    <div id="answers"></div>
+  {% endif %}
+</div>
+
+<div class="row">
+  <a href=# class='formlink' id='goback'><button type='button' id='cancel' class='btn btn-default' onclick="goBack();">Takaisin</button></a>
+</div>
+
+<script>
+function goBack () {
+  window.location.href = '{{ default_page }}'
+}
+
+var Col, Heads, Table, TableHead, Tr, Th, TabCell, DivContainer
+var FormId = window.location.pathname.split('/').reverse()[0]
+
+$.post('../_vastaukset', { 'forms': FormId }).done(function (ReturnedForm) {
+  Col = ['open_ts', 'answer_content']
+  Heads = ['Lomake', 'Vastaukset']
+
+  /* create table object */
+  Table = document.createElement('table')
+  Table.setAttribute('class', 'table table-sm borderless')
+
+  /* add returned data to the table */
+  for (var k = 0; k < ReturnedForm.length; k++) {
+    Tr = Table.insertRow(-1)
+    Tr.setAttribute('id', ReturnedForm[k]['answer_set_id'])
+    for (var m = 0; m < Col.length; m++) {
+      TabCell = Tr.insertCell(-1)
+      TabCell.innerHTML = ReturnedForm[k][Col[m]]
+    }
+  }
+
+  /* insert table object to the page */
+  DivContainer = document.getElementById('answer_container')
+  DivContainer.innerHTML = ''
+  DivContainer.appendChild(Table)
+
+  $.post('../_check', { 'id': FormId }).done(function (Privileges) {
+    $('div.wtf_form_name').each(function () {
+      var _tjis = $(this)
+      var _targ = $(this).parent().prev('td')
+      var TableBody = $(_tjis).find('tbody')
+      var AnswerSet = $(_tjis).closest('tr').attr('id')
+      TableBody.prepend('<tr><td>' + _targ.text() + '</td></tr>')
+      if (Privileges['modify_privilege'] === true) {
+        TableBody.append("<tr><td><a href='#' class='edit-link' id='" + AnswerSet + "'><button class='btn btn-success btn-sm edit-btn' rel='tooltip-button' title='Muokkaa' id='" + AnswerSet + "'>Muokkaa</button></a></td></tr>")
+      } else {
+        TableBody.append("<tr><td><a href='#' class='edit-link' id='" + AnswerSet + "'><button class='btn btn-success btn-sm edit-btn disabled' rel='tooltip-button' title='Muokkaa' id='" + AnswerSet + "'>Muokkaa</button></a></td></tr>")
+      }
+      $(window).ready(function () {
+        $("[rel='tooltip-button']").tooltip({ html: true, delay: {show: 300, hide: 100} })
+      })
+      _targ.empty()
+      _targ.append(_tjis)
+    })
+
+    $('button.edit-btn').click(function (e) {
+      e.preventDefault()
+
+      if (!$(this).hasClass('disabled')) {
+        window.location.href = '../edit/' + FormId + '/' + $(this).attr('id')
+      }
+    })
+  })
+
+
+
+  $('div.wtf_form').each(function () {
+    $(this).find('table').addClass('table table-sm table-bordered')
+  })
+})
+</script>
+{% endblock %}

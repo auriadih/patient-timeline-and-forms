@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="268" height="270" stroke="#000">
+<circle fill="none" stroke-width="7" cx="134" cy="126" r="122"/>
+<path stroke-width="77" stroke-dasharray="79" fill="none"
+d="m209,127a75,75 0 1,0-.7,9"/>
+<circle cx="134" cy="126" r="22"/>
+</svg>

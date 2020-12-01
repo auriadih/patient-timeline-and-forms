@@ -1,0 +1,16 @@
+{% import "bootstrap/utils.html" as utils %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% extends "base.html" %}
+
+{% block contents %}
+
+{% if user_group == "xxx" %} <!-- TODO-demo Hardcoded in the example -->
+<h3>Tarkastele tilastoja:</h3>
+<iframe class="embed-responsive-item" id="shinyframe" src="{{ base_url }}/{{ report_path }}" frameborder="0" scrolling="no" style="width: 100%; height: 1980px;" seamless></iframe>
+{% else %}
+<h3>Raportit</h3>
+<h4>Ei ajettavia raportteja tällä hetkellä</h4>
+{% endif %}
+
+{% endblock %}

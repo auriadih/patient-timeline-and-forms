@@ -1,0 +1,97 @@
+{% import "bootstrap/utils.html" as utils %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% extends "base.html" %}
+
+{% block contents %}
+<div class="entryfields">
+  <div class="login-details">
+    <h1>Kirjaudu sisään tilillesi</h1>
+    <br/>
+    {{ wtf.quick_form(login) }}
+  </div>
+  <div class="specialty" style="display: none;">
+    <h3>Valitse näkymä</h3>
+  </div>
+  <div class="select-view"></div>
+  <div class="errors"></div>
+  <div class="error">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <h5>{{ message }}</h5>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+</div>
+
+<script>
+var LoginInformation, Specialty, SpecialtyId, RootForm, RootFormId
+
+/* Function for handling complex login logic */
+function ComplexLogin () {
+  $('div.error').empty()
+  $('div.errors').empty()
+
+  /* Fetch login form data */
+  LoginInformation = $('form.form').serializeArray()
+
+  $.post('_login', LoginInformation).done(function (ReturnedForm) {
+    if (ReturnedForm === 'redirect') {
+      window.location.href = "{{ url_for('main.homepage') }}"
+    } else {
+      /* Refresh fields */
+      $('div.login-details').slideToggle('slow').empty() /* clear form */
+      $('div.specialty').slideToggle('slow').focus()
+
+      /* Populate place-holder with database/backend return */
+      $('div.specialty').append(ReturnedForm)
+
+      /* Automatically populate next field after selecting specialty from drop-down menu */
+      $('form select#specialty').on('change', function (event) {
+        event.preventDefault()
+
+        Specialty = $('select#specialty option:selected').text()
+        SpecialtyId = $('select#specialty option:selected').val()
+
+        $.post('_roots', { 'group': Specialty, 'group_id': SpecialtyId }).done(function (ReturnedRoots) {
+          if (ReturnedRoots === 'redirect') {
+            window.location.href = "{{ url_for('main.homepage') }}"   
+          } else {
+            /* Populate place-holder with specialty selection drop-down by adding also "root form" drop-down */
+            $('div.select-view').empty()
+            $('div.select-view').append(ReturnedRoots)
+
+            $('form select#view').on('change', function (event) {
+              event.preventDefault()
+
+              RootForm = $('select#view option:selected').text()
+              RootFormId = $('select#view option:selected').val()
+
+              $.post('_root', { 'group': Specialty, 'group_id': SpecialtyId, 'rootform': RootForm, 'rootform_id': RootFormId }).done(function (data) {
+                window.location.href = "{{ url_for('main.homepage') }}"
+              })
+            })
+          }
+        }).fail(function () { window.alert('Jotakin meni pieleen kirjautumisessa.') })
+      })
+    }
+  }).fail(function (Errors) {
+    var errs = JSON.parse(Errors.responseText)
+    $('div.errors').empty()
+    $('div.errors').append('<h5>' + errs['err'] + '</h5>')
+  })
+}
+
+/* Prevent submit button to reload page and try standard POST */
+$('form').submit(function (e) {
+  e.preventDefault()
+})
+
+/* Alter login form submit button function to prevent default page reload */
+$(window).on('load', function () {
+  $('form.form').attr('onsubmit', 'ComplexLogin();')
+})
+</script>
+{% endblock %}

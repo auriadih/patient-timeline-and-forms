@@ -1,0 +1,913 @@
+{% import "bootstrap/utils.html" as utils %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% extends "base.html" %}
+
+{% block head %}
+{{ super() }}
+{% if timeline_access %}
+<script src="{{ url_for('static', filename='js/moment-with-locales.js') }}"></script>
+<script src="{{ url_for('static', filename='js/vis.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/timeline.js') }}"></script>
+<link href="{{ url_for('static', filename='css/timeline.css') }}" rel="stylesheet">
+
+<link href="{{ url_for('static', filename='css/vis-timeline-graph2d.min.css') }}" rel="stylesheet">
+
+<script src="{{ url_for('static', filename='js/jquery-migrate-1.2.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/slick.js') }}"></script>
+<link href="{{ url_for('static', filename='css/slick.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/slick-theme.css') }}" rel="stylesheet">
+{% endif %}
+{% endblock %}
+
+{% block contents %}
+
+<!-- Contents -->
+
+<hr class="intro-divider">
+<div class="row" id="otsikko">
+  <div class="col-lg-auto">
+    <h3>{{ child }} - Uusi kirjaus:</h3>
+  </div>
+</div>
+
+{% if patient %}
+
+  <div class="center">
+    <div class="row" id="kirjaukset" style="padding: 15px;">
+      <div class="col-md-12">
+        <!-- Dynamic form buttons are generated here -->
+        {% if formlinks %}
+          {{ formlinks|safe }}
+          {% if session['sees_filled_forms'] %}
+            <hr class="intro-divider">
+            {% include 'forms/lista.html' %}
+          {% endif %}
+        {% else %}
+          <h4>Ei määriteltyjä tiedonkeruulomakkeita.</h4>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if timeline_access %}
+  <hr class="intro-divider">
+
+  <!-- Patient Timeline - all possible events -->
+  <div class="timeline-container">
+
+    <!-- Loading animation -->
+    <div class="loader">
+      <h4>Ladataan potilaan aikajanaa</h4>
+    </div>
+
+    <div class="error-block" id="post-errors"></div>
+
+    <div class="timeline-buttons">
+      <!-- Dynamic buttons are generated here -->
+    </div>
+
+    <!-- Timeline with graph -->
+    <div id="lab_visualization" data-html="true"></div>
+
+    <!-- EPIC curve -->
+    <div id="epic_visualization" data-html="true"></div>
+
+    <div id="timeline"></div>
+
+    <!-- Event info panel -->
+    <div class="row">
+      <div class="col-12">
+        <div class="owl-carousel owl-theme" id="tietoboksi"></div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{% else %}
+  <div class="center">
+    <a href="{{ url_for('auth.patient') }}"><button type="button" id='patient' class='btn btn-default btn-lg'><h4>Valitse potilas</h4></button></a>
+  </div>
+{% endif %}
+
+<script>
+{% if timeline_access %}
+
+/* Event listeners for syncing timelines while zooming and panning */
+function OnChangeTimeline (LineRange) {
+  Graph2D.setOptions(Timeline.getVisibleChartRange())
+  Epic2D.setOptions(Timeline.getVisibleChartRange())
+}
+function OnChangedTimeline (LineRange) {
+  VisLabelSameWidth()
+  Graph2D.setOptions(Timeline.getVisibleChartRange())
+  Epic2D.setOptions(Timeline.getVisibleChartRange())
+  UpdateTooltips()
+}
+function OnChangeGraph (LineRange) {
+  //Timeline.setVisibleChartRange(LineRange.start, LineRange.end)
+  Graph2D.setOptions(Timeline.getVisibleChartRange())
+  Epic2D.setOptions(Timeline.getVisibleChartRange())
+  VisLabelSameWidth()
+}
+
+/* Timeline tooltips */
+function UpdateTooltips () {
+  for (var i = 0; i < Timeline.items.length; i++) {
+
+    /* Check if item is not clustered */
+    if (Timeline.items[i].cluster == null) {
+
+      /* Check if item has already tooltip */
+      if ($(Timeline.items[i].dom).attr('rel') !== 'tooltip-item') {
+        if (Timeline.items[i].tooltip) {
+          $(Timeline.items[i].dom).attr('rel', 'tooltip-item').attr('data-original-title', Timeline.items[i].tooltip).attr('data-placement', 'right')
+        }
+      }
+    } else {
+      var klust = Timeline.items[i].cluster
+      var cats = []
+      var ocrs = []
+      for (j = 0; j < klust.items.length; j++) {
+        /* Get unique categories */
+        if (cats.indexOf(klust.items[j].className.split(' unit')[0]) === -1) {
+          cats.push(klust.items[j].className.split(' unit')[0])
+        }
+
+        /* Get all categories */
+        ocrs.push(klust.items[j].className.split(' unit')[0])
+
+        /* Count category occurrences */
+        var ttip = []
+        for (k = 0; k < cats.length; k++) {
+          var indices = []
+          var idx = ocrs.indexOf(cats[k])
+          while (idx != -1) {
+            indices.push(idx)
+            idx = ocrs.indexOf(cats[k], idx + 1)
+          }
+          ttip.push(indices.length + " " + cats[k])
+        }
+
+        /* Generate simple html table for tooltip */
+        var html = "<table>"
+        for (var m = 0; m < ttip.length; m++) {
+            html += "<tr>" + ttip[m] + "</tr><br>"
+        }
+        html += "</table>"
+
+        /* Attach tooltips to cluster items */
+        if ($(Timeline.items[i].dom).attr('rel') !== 'tooltip-item') {
+          $(klust.dom).attr('rel', 'tooltip-item').attr('data-original-title', html).attr('data-placement', 'right')
+        }
+      }
+    }
+  }
+  $(window).ready(function () {
+    $('.tooltip').removeClass('show')
+    $("[rel='tooltip']").tooltip()
+    $("[rel='tooltip-item']").tooltip({ html: true, delay: {show: 0, hide: 100} })
+  })
+}
+
+/* options 'editable: true' allows adding items to timeline by doubleclicking, prevent this functionality */
+function OnDoubleClick () {
+  Timeline.cancelAdd()
+}
+
+/* If item is clicked, scroll event info panel to right position, or if cluster of items is clicked, zoom in to the cluster */
+function IsSelected () {
+  var Sel = ''
+  Sel = Timeline.getSelection()
+
+  if (Sel.length) {
+    /* if selection is one item */
+    if (Sel[0].row !== undefined) {
+      var IndividualItem = Timeline.getItem(Sel[0].row).element_id
+
+      /* If event info box is not visible on the page, scroll to that */
+      if (($(window).scrollTop() + $(window).height()) < ($('#tietoboksi').offset().top + $('#tietoboksi').outerHeight())) {
+        $('html').animate({
+          scrollTop: $('#tietoboksi').offset().top
+        }, 1000)
+      } else { /* TODO: fallback */ }
+
+      /* Scroll to selected item event info */
+      $('#tietoboksi').slick('slickGoTo', $('span#' + IndividualItem + '.tietue').parent().parent().attr('data-slick-index'))
+    }
+
+    /* if selection is clustered items, focus on timeline and zoom in */
+    if (Sel[0].cluster !== undefined) {
+      var ClusterItems = Timeline.getCluster(Sel[0].cluster).items
+      var StartDates = []
+
+      /* gather start dates of items inside cluster */
+      for (var i = 0; i < ClusterItems.length; i++) {
+        StartDates.push(moment.utc(new Date(ClusterItems[i].start).toGMTString()))
+      }
+
+      /* zoom timeline to appropriate scale */
+      Timeline.zoom(0.8, new Date(new Date(moment.min(StartDates)) + (new Date(moment.max(StartDates)) - new Date(moment.max(StartDates))) / 2))
+      Graph2D.setOptions(Timeline.getVisibleChartRange())
+      Epic2D.setOptions(Timeline.getVisibleChartRange())
+
+      /* call for timeline tooltip update function */
+      UpdateTooltips()
+    }
+  }
+}
+
+/* Function for adding answers fetched from db to timeline elements */
+function LoopAnswers () {
+  for (var j = 0; j < DbAnswers.length; j++) {
+    /* Prevent 'undefined' showing on every item on timeline */
+    DbAnswers[j].content = null
+
+    /* Insert answered form content to be shown when item is clicked */
+    DbAnswers[j].eventinfo = DbAnswers[j].answer_content
+
+    /* "Generate" ID for item */
+    DbAnswers[j].event_id = '' + DbAnswers[j].session_id + DbAnswers[j].person_id + DbAnswers[j].form_id + new Date(DbAnswers[j].open_ts).getTime()
+    DbAnswers[j].element_id = 99900000000 + DbAnswers[j].event_id
+
+    /* Add class name */
+    DbAnswers[j].className = 'lomake'
+    Legend[DbAnswers[j].className] = true
+    DbAnswers[j].group = 'Keskeinen'
+
+    /* Add timestamp */
+    DbAnswers[j].start = moment(DbAnswers[j].open_ts).toDate()
+
+    /* Add to timeline elements */
+    DbEvents.push(DbAnswers[j])
+
+    /* Generate event cards */
+    TheText += "<span class='tietue slide' id='" + DbAnswers[j].element_id + "' style='display:block'>" +
+      moment(DbAnswers[j].start).format('LLLL') + '<br/><br/>' + DbAnswers[j].eventinfo + '</span>'
+  }
+}
+
+function DrawAndUpdate () {
+  Timeline.draw(DbEvents)
+  UpdateTooltips()
+  Graph2D.setOptions(Timeline.getVisibleChartRange())
+  Epic2D.setOptions(Timeline.getVisibleChartRange())
+
+  /* Delete hidden elements of forced groups from timeline */
+  DrawnTimeline = Timeline.getData()
+  for (var Item in DrawnTimeline) {
+    if (DrawnTimeline[Item].className === 'hidden_groups') {
+      Timeline.deleteItem(Item, preventRender = true)
+    }
+  }
+
+  /* Check if selected subject has 'too many' elements */
+  console.log(DrawnTimeline.length)
+  if (DrawnTimeline.length > 600) {
+    //Timeline.setOptions(moment().subtract(2, 'years'), moment())
+    //Timeline.zoom(0.5)
+    Timeline.setVisibleChartRange(moment().subtract(2, 'years'), moment())
+  }
+
+  /* Populate all patient info to the page */
+  PatientRecords = document.getElementById('tietoboksi')
+  PatientRecords.innerHTML = TheText
+
+  /* Activate 'slick' cards */
+  var slickOptions = {
+    infinite: false,
+    adaptiveHeight: true,
+    arrows: true,
+    slidesToShow: 1,
+    centerMode: true,
+    centerPadding: '80px',
+    variableWidth: false,
+    dots: false
+  }
+  $('div#tietoboksi').slick(slickOptions)
+
+  /* Add lab test search */
+  AddLabAutoComplete()
+
+  /* Add timeline item legends */
+  for (var Key in Legend) {
+    if ($('button#' + Key + '.showhide').length === 0) {
+      $('div.timeline-buttons').append("<button type='button' id='" + Key + "' class='btn-sm btn-info showhide' rel='tooltip-button' title='Piilota'>" + Key.replace(/_/g, ' ') + '</button>')
+      $('button#' + Key + '.showhide').css('background-size', '20px 20px').css('background-position', 'left').css('padding-left', '25px').css('color', 'black').css('text-transform', 'capitalize')
+    }
+  }
+
+  /* Activate timeline button tooltips */
+  $(document).ready(function () {
+    $("[rel='tooltip']").tooltip({ html: true, delay: {show: 0, hide: 100} })
+    $("[rel='tooltip-button']").tooltip({ html: true, delay: {show: 300, hide: 100} })
+
+    /* keyboard shortcuts: check caps-lock state (shortcuts only in use when capslock is on) */
+    document.addEventListener('keydown', function(event) {
+      if (event.getModifierState('Control')) {
+        Timeline.setOptions({'zoomable': true})
+        Graph2D.setOptions({'zoomable': true})
+        Epic2D.setOptions({'zoomable': true})
+      }
+    })
+
+    /* keyboard shortcuts: bind actions to certain keys pressed, can be one or multiple */
+    $(document).on('keyup', function(e) {
+      Timeline.setOptions({'zoomable': false})
+      Graph2D.setOptions({'zoomable': false})
+      Epic2D.setOptions({'zoomable': false})
+      UpdateTooltips()
+      $('.tooltip').removeClass('show')
+      $("[rel='tooltip']").tooltip()
+      $("[rel='tooltip-button']").tooltip({ html: true, delay: {show: 300, hide: 100} })
+    })
+  })
+
+  /* Link a function to timeline button click event */
+  $('button.showhide').click(function () { ToggleVis($(this).attr('id')) })
+
+  UpdateTooltips()
+
+  /* Hide loading animation after timeline data is downloaded and timeline rendered */
+  $('div.loader').css({ opacity: 0, transition: 'opacity 0.5s' }).slideUp(1200)
+}
+
+function GetTimelineData () {
+  $.get('_hae_janatiedot', function (TimelineData) {
+    DbEvents = TimelineData['events']
+    DbAnswers = TimelineData['answers']
+    TheText = ''
+
+    if (DbEvents) {
+      for (var i = 0; i < DbEvents.length; i++) {
+        /* Generate 'legend' buttons to show/hide events */
+        Legend[DbEvents[i].className] = true
+
+        /* Groups that should have time periods would be represented as range bars */
+        /*if (TimeSpans.includes(DbEvents[i].className) === true) {*/
+
+        /* IE11 fix: Explorer doesn't support ECMA Script 2015 includes() function */
+        if (TimeSpans.indexOf(DbEvents[i].className) > 0) {
+          DbEvents[i].end = moment(DbEvents[i].end_ts).toDate()
+        }
+
+        /* Take element_id to event_id */
+        DbEvents[i].event_id = DbEvents[i].element_id
+
+        /* Substitute pre-defined text to icon if given */
+        if (DbEvents[i].icon_text) {
+          DbEvents[i].content = DbEvents[i].icon_text
+          DbEvents[i].className += ' unit'
+        }
+        else {
+          DbEvents[i].content = null
+        }
+
+        /* Convert start (string) to Date */
+        DbEvents[i].start = moment(DbEvents[i].start).toDate()
+
+        /* Generate event cards */
+        TheText += "<span class='tietue' id='" + DbEvents[i].element_id + "' style='display:block'>" + moment(DbEvents[i].start).format('LLLL')
+        if (DbEvents[i].end) {
+          TheText += ' - ' + moment(moment(DbEvents[i].end_ts).toDate()).format('LLLL')
+        }
+        TheText += '<br/><br/>' + DbEvents[i].eventinfo + '</span>'
+
+        /* Gather group to ExistingGroups variable if not in it yet */
+        if (ExistingGroups.indexOf(DbEvents[i].group) === -1) {
+          ExistingGroups += DbEvents[i].group
+        }
+      }
+
+      /* force groups to timeline */
+      MiddleStart = DbEvents[Math.floor(DbEvents.length / 2)].start
+
+      /* Make sure all default groups are present */
+      var GroupOrder = ['Keskeinen', 'Kiinnostava', 'Muu']
+      for (var i = 0; i < GroupOrder.length; i++) {
+        if (ExistingGroups.indexOf(GroupOrder[i]) === -1) {
+          DbEvents.push({ 'start': MiddleStart,
+            'group': GroupOrder[i],
+            'className': 'hidden_groups' })
+        }
+      }
+
+      /* Add form answers */
+      if (DbAnswers) { LoopAnswers() }
+
+      /* Draw timeline with modified data, fix tooltips and update graph scale */
+      DrawAndUpdate()
+
+    } else if (!DbEvents && DbAnswers) {
+      DbEvents = []
+      LoopAnswers()
+
+      /* Draw timeline with modified data, fix tooltips and update graph scale */
+      DrawAndUpdate()
+    } else {
+      document.getElementById('tietoboksi').append('Potilaalla ei tapahtumia.')
+    }
+    /* Hide loading animation after timeline data is downloaded and timeline rendered */
+    $('div.loader').css({ opacity: 0, transition: 'opacity 0.5s' }).slideUp(1200)
+  })
+}
+
+/* Loop function to go through all items and clusters containing items */
+function ToggleVis (Categ) {
+  if ($('button#' + Categ).attr('data-original-title') === 'Piilota') {
+    $('button#' + Categ).tooltip('hide').attr('data-original-title', 'Näytä')
+  } else if ($('button#' + Categ).attr('data-original-title') === 'Näytä') {
+    $('button#' + Categ).tooltip('hide').attr('data-original-title', 'Piilota')
+  }
+
+  /* Attach to timeline */
+  var TlData = Timeline.getData()
+
+  /* Which items should be hided */
+  var ToDel = []
+  for (var Key in TlData) {
+    if (TlData[Key].className.search(Categ) === 0) {
+      ToDel.push(Key)
+    }
+  }
+
+  /* Which items should be shown */
+  var ToAdd = []
+  for (var Item in HiddenData) {
+    if (HiddenData[Item].className.search(Categ) === 0) {
+      ToAdd.push(Item)
+    }
+  }
+
+  /* Delete timeline items */
+  if (ToAdd.length === 0 && ToDel.length > 0) {
+    var i = ToDel.length
+    while (i--) {
+      if (ToDel[i] !== undefined) {
+        /* Gather deleted data to array */
+        HiddenData.push(Timeline.getItem(ToDel[i]))
+
+        /* Actually delete from timeline */
+        Timeline.deleteItem(ToDel[i], preventRender = true)
+      }
+    }
+    /* Refresh timeline */
+    Timeline.redraw()
+
+  /* Add previously deleted timeline events */
+  } else if (ToAdd.length > 0 && ToDel.length === 0) {
+    var j = ToAdd.length
+    while (j--) {
+      if (ToAdd[j] !== undefined) {
+        var k = ToAdd[j]
+        /* Add gathered deleted data from array */
+        Timeline.addItem(HiddenData[k], preventRender = true)
+
+        /* Delete items from array */
+        HiddenData.splice(k, 1)
+      }
+    }
+    /* Refresh timeline */
+    Timeline.redraw()
+  }
+  UpdateTooltips()
+}
+
+/* TODO: add functionality to save group changes to database */
+function onMove () {
+  var SelectedItem = Timeline.getSelection()
+  if (SelectedItem.length) {
+    var MovedItem = Timeline.getItem(SelectedItem[0].row)
+    var MovedElementId = JSON.stringify({ element_id: MovedItem.element_id, group: MovedItem.group }, ', ')
+    console.log(MovedElementId)
+    // callback(MovedElementId)
+  }
+}
+
+/* TODO: track item group changes */
+function IsChanged (Item, Callback) {
+  // itemi = timeline.getItem(item)
+  // console.log(itemi)
+  console.log('changed')
+}
+
+/* Function for syncing label column width of PSA graph with timeline groups */
+function VisLabelSameWidth () {
+  var Width1 = $('#lab_visualization .vis-content .vis-data-axis').width() || 0
+  var Width2 = $('div.timeline-groups-axis.timeline-groups-axis-onleft').width() || 0
+  var Width3 = $('#epic_visualization .vis-content .vis-data-axis').width() || 0
+
+  if (Math.max(Width1, Width2, Width3) === Width2) {
+    $('#lab_visualization .vis-content')[1].style.width = Width2 + 'px'
+    $('#epic_visualization .vis-content')[1].style.width = Width2 + 'px'
+  } else {
+    $('div.timeline-groups-axis.timeline-groups-axis-onleft').width(Math.max(Width1, Width2, Width3) + 'px')
+  }
+}
+
+function UpdateVisualisation (labtest) {
+  $.post('_hae_labratiedot', { 'ltest': labtest }).done(function (LabData) {
+    GraphItems.clear({ items: true })
+    for (var m = 0; m < LabData.length; m++) {
+      GraphItems.add({ x: LabData[m][1] || LabData[m]['start_ts'],
+        y: LabData[m][0] || LabData[m]['result'],
+        group: labtest,
+        label: { xOffset: -5,
+          yOffset: 15,
+          content: LabData[m][0] || LabData[m]['result']
+        }
+      })
+    }
+
+    /* hide visualisation if no data */
+    if (!GraphItems.length) {
+      Graph2D.setOptions({height: '0px'})
+    } else {
+      Graph2D.setOptions({height: GrOptions['height']})
+    }
+
+    $('span#valittu_labra').empty().append("<span style='display:inline-block; width: 10px;'></span>Visualisoituna: " + labtest)
+  }).fail(function (jqXHR) {
+    $('#post-errors').empty()
+    $('#post-errors').append("<h5>" + jqXHR['responseText'] + "</h5>")
+  })
+}
+
+function AddLabAutoComplete () {
+  /* Autocomplete search from database all lab tests done for the patient */
+  $(function () {
+    /* Attach autocomplete to input field */
+    $('#labrat').autocomplete({
+      /* Define callback to format results */
+      source: function (req, add) {
+        /* Get lab test names with units from server */
+        $.getJSON('_lab_autocomplete', { q: req.term }, function (data) {
+          var suggestions = []
+          $.each(data, function (i, val) {
+            var valTest = val[0] || val['test']
+            var valUnit = val[1] || val['unit']
+            suggestions.push(valTest + ' (' + valUnit + ')')
+          })
+
+          /* Pass array of lab test names to callback */
+          add(suggestions)
+        })
+      },
+
+      /* Define select handler */
+      select: function (e, ui) {
+        var friend = ui.item.value
+        var span = $('<span>').text(friend)
+        var a = $('<a>').addClass('remove').attr({ href: 'javascript:', title: 'Remove ' + friend }).text('x').appendTo(span)
+        UpdateVisualisation(friend)
+      }
+    })
+  })
+
+  /* Add lab visualization text field above timeline container */
+  if ($('input#labrat').length === 0) {
+    $('div.timeline-buttons').append("<span style='display:inline-block; width: 10px;'></span><label for='labrat'>Laboratorioarvot:<span style='display:inline-block; width: 10px;'></span></label><input id='labrat'><br/>")
+    $('input#labrat').after("<span style='display:inline-block;' id='valittu_labra'></span>")
+  }
+}
+
+/* Button functionality to show all hided specific elements */
+function ResetTimeline () {
+  if (HiddenData.length > 0) {
+    /* Which items should be shown */
+    var ToAdd = []
+    for (var Item in HiddenData) {
+      ToAdd.push(Item)
+    }
+
+    var j = ToAdd.length
+    var k = ''
+    while (j--) {
+      if (ToAdd[j] !== undefined) {
+        k = ToAdd[j]
+        /* Add gathered deleted data from array */
+        Timeline.addItem(HiddenData[k], preventRender = true)
+
+        /* Delete items from array */
+        HiddenData.splice(k, 1)
+      }
+    }
+    /* Refresh timeline */
+    Timeline.redraw()
+
+    /* Reset button tooltips */
+    if ($('.showhide').attr('data-original-title') === 'Näytä') {
+      $('.showhide').tooltip('hide').attr('data-original-title', 'Piilota')
+    }
+  }
+}
+
+/* Reset button for timeline */
+function FitTimeline () {
+  Timeline.setVisibleChartRangeAuto()
+  Graph2D.setOptions(Timeline.getVisibleChartRange())
+  Epic2D.setOptions(Timeline.getVisibleChartRange())
+  OnChangedTimeline()
+}
+
+/* Initialize timeline variables */
+var GraphItems = new vis.DataSet()
+var EpicItems = new vis.DataSet()
+
+/* Get EPIC scores */
+$.get('_hae_epictiedot').done(function (EpicData) {
+  EpicItems.clear({ items: true })
+  for (var m = 0; m < EpicData.length; m++) {
+    EpicItems.add({ x: EpicData[m][2] || EpicData[m]['ts'],
+      y: EpicData[m][0] || EpicData[m]['value'],
+      group: EpicData[m][1] || EpicData[m]['series_name'],
+      label: { xOffset: -5,
+        yOffset: 15,
+        content: Math.round(EpicData[m][0] || EpicData[m]['value'])
+      }
+    })
+  }
+
+  /* hide visualisation if no data */
+  if (!EpicItems.length) {
+    Epic2D.setOptions({height: '0px'})
+  } else {
+    Epic2D.setOptions({height: EpicOptions['height']})
+  }
+}).fail(function (jqXHR) {
+  $('#post-errors').empty()
+  $('#post-errors').append("<h5>" + jqXHR['responseText'] + "</h5>")
+})
+
+
+
+
+
+
+/* TODO: Under Construction -- if item is moved from group to another group, save the transitions to the database */
+var ItemChanges = []
+
+/* Temporary variable to gather event information */
+var TheText = ''
+
+/* Localize timeline */
+if (typeof links === 'undefined') {
+  var links = {}
+  links.locales = {}
+} else if (typeof links.locales === 'undefined') {
+  links.locales = {}
+};
+
+links.locales['fi'] = {
+  'MONTHS': ['tammikuu', 'helmikuu', 'maaliskuu', 'huhtikuu', 'toukokuu', 'kesäkuu', 'heinäkuu', 'elokuu', 'syyskuu', 'lokakuu', 'marraskuu', 'joulukuu'],
+  'MONTHS_SHORT': ['tammi', 'helmi', 'maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo', 'syys', 'loka', 'marras', 'joulu'],
+  'DAYS': ['sunnuntai', 'maanantai', 'tiistai', 'keskiviikko', 'torstai', 'perjantai', 'lauantai'],
+  'DAYS_SHORT': ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'],
+  'ZOOM_IN': 'Zoom in',
+  'ZOOM_OUT': 'Zoom out',
+  'MOVE_LEFT': 'Move left',
+  'MOVE_RIGHT': 'Move right',
+  'NEW': 'New',
+  'CREATE_NEW_EVENT': 'Create new event'
+}
+
+/* Localize other timestamps (outside timeline) */
+moment.locale('fi')
+
+var MaxDate = new Date(new Date().getTime() + (1 * 365 * 24 * 60 * 60 * 1000)) /* add one year to current date */
+var Options = ''
+var GrOptions = ''
+var GrContainer = ''
+var Timeline = ''
+var Graph2D = ''
+var Epic2D = ''
+var ExistingGroups = []
+var Legend = []
+var TimeSpans = ['osastohoito', 'sädehoito', 'sytostaattihoito']
+var RemoveText = /()/
+var MiddleStart = ''
+var DrawnTimeline = ''
+var PatientRecords = ''
+var HiddenData = []
+var DbEvents = []
+var DbAnswers = []
+var FindProduct = /()/
+var FindCareUnit = ''
+var FindUnit = ''
+var MatchUnit = ''
+var Matches = ''
+var Match = ''
+var Explanations = []
+var friend = ''
+
+/* Specify timeline options */
+Options = {
+  'locale': 'fi',
+  'moveable': true,
+  'zoomable': false,
+  'zoomMin': 1000000,
+  'cluster': true,
+  'clusterMaxItems': 4,
+  'selectable': true,
+  'unselectable': true,
+  'editable': true,
+  'groupsChangeable': true,
+  'groupMinHeight': 35,
+  'minHeight': 35 * 3,
+  'timeChangeable': false,
+  'snapEvents': false,
+  'eventMargin': 10,
+  'eventMarginAxis': 10,
+  'stackEvents': true,
+
+  /* Force span for timeline */
+  min: new Date(1980, 1, 1),
+  max: MaxDate,
+
+  groupsOrder: "hard-code", /* function (a, b) { return b - a}, */
+  customStackOrder: function (a, b) { return b - a }
+}
+
+GrOptions = {
+  /* Force span for timeline */
+  min: new Date(1980, 1, 1),
+  max: MaxDate,
+
+  /* Force height for curve section */
+  height: '140px',
+  /*dataAxis: { left: {range: { min:  }}},*/
+  
+  moveable: true,
+  zoomable: false,
+  
+  legend: true,
+  defaultGroup: '',
+  drawPoints: {
+    onRender: function (item) {
+      return item.label != null
+    },
+    style: 'circle',
+    size: 8
+  }
+}
+
+EpicOptions = {
+  /* Force span for timeline */
+  min: new Date(1980, 1, 1),
+  max: MaxDate,
+
+  /* Force height for curve section */
+  height: '140px',
+  /*dataAxis: { left: {range: { min:  }}},*/
+
+  moveable: true,
+  zoomable: false,
+
+  legend: true,
+  defaultGroup: '',
+  drawPoints: {
+    onRender: function (item) {
+      return item.label != null
+    },
+    style: 'circle',
+    size: 8
+  },
+  interpolation: false
+}
+
+/* Placeholders */
+GrContainer = document.getElementById('lab_visualization')
+EpicContainer = document.getElementById('epic_visualization')
+Timeline = new links.Timeline(document.getElementById('timeline'), Options)
+
+// TODO: CONSIDER TESTING AND PERHAPS CHANGING TO Graph.js INSTEAD OF Vis.js Graph2d.js
+// http://almende.github.io/chap-links-library/graph.html
+
+/* Spawn PSA graph points */
+Graph2D = new vis.Graph2d(GrContainer, GraphItems, GrOptions)
+Epic2D = new vis.Graph2d(EpicContainer, EpicItems, EpicOptions)
+
+/* Add legend buttons above timeline container */
+$('div.timeline-buttons').append("<button type='button' id='fit' class='btn-sm btn-primary fit'>Sovita</button>")
+$('div.timeline-buttons').append("<button type='button' id='show-all' class='btn-sm btn-primary show-all'>Näytä kaikki</button>")
+$('div.timeline-buttons').append("<button type='button' id='cluster' class='btn-sm btn-info' rel='tooltip' title='Ryhmittyneet tapahtumat'>X</button>")
+$('div.timeline-buttons').append("<button type='button' id='cluster-range' class='btn-sm btn-info' rel='tooltip' title='Ryhmittyneet tapahtumat ja jaksot'>X</button>")
+
+/* Button functionality to hide or show specific elements */
+$('button.fit').click(function () { FitTimeline() })
+$('button.show-all').click(function () { ResetTimeline() })
+
+/* Add "legend" buttons for clustered events */
+$('button#cluster').css('background-color', '#d9d9d9').css('border-color', '#b0b0b0')
+$('button#cluster-range').css('background-color', '#b0b0b0').css('border-color', '#b0b0b0')
+
+/* If item is moved from group to another group, save the transitions to the database */
+links.events.addListener(Timeline, 'changed', onMove)
+
+/* Update graphs when resizing window but prevent functions firing while resizing, only after resize */
+var resizeId
+window.addEventListener('resize', function() {
+    clearTimeout(resizeId)
+    resizeId = setTimeout(doneResizing, 500)
+})
+
+function doneResizing () {
+  Timeline.checkResize()
+  OnChangedTimeline()
+}
+
+/* Actual event listeners, call for functions on event */
+//Graph2D.on('rangechange', OnChangeGraph)
+//Epic2D.on('rangechange', OnChangeGraph)
+
+//Graph2D.on('finishedRedraw', OnChangeGraph)
+//Epic2D.on('finishedRedraw', OnChangeGraph)
+
+Graph2D.on('rangechanged', OnChangeGraph)
+Epic2D.on('rangechanged', OnChangeGraph)
+
+/* Add event listeners to track changes of displaying items, to attach tooltips to visible items */
+//links.events.addListener(Timeline, 'ready', OnChangedTimeline)
+//links.events.addListener(Timeline, 'rangechange', OnChangeTimeline)
+links.events.addListener(Timeline, 'rangechanged', OnChangedTimeline)
+links.events.addListener(Timeline, 'add', OnDoubleClick)
+//links.events.addListener(Timeline, 'changed', IsChanged)
+links.events.addListener(Timeline, 'select', IsSelected)
+
+/* Fetch timeline elements from database */
+GetTimelineData()
+
+/* TODO: make timeline year labels clickable to zoom to that year or starting from that year */
+$('.timeline-axis-text').click(function () { console.log("clicked") })
+{% endif %}
+
+/* Clicking a form button */
+$('.formlink').click(function (e) {
+  /* Based on insert privileges check if can access form */
+  if (! $(this).find('button').hasClass('no-can-do')) {
+    window.location.href = 'lomake/' + $(this).attr('id')
+  }
+})
+
+$(document).ready(function () {
+  /* Check from database if form has already been answered and change button style accordingly */
+  $.get('_checkanswers').done(function (Data) {
+    if (Data['forms'].length > 0) {
+      var DbAnsweredForms = Data['forms']
+      for (var i = 0; i < DbAnsweredForms.length; i++) {
+        $('button[id=' + DbAnsweredForms[i].form_id + ']').removeClass('btn-danger').addClass('btn-success')
+      }
+    }
+  })
+
+  /* Add tooltips to form buttons */
+  $('.formlink').find('button').each(function () {
+    if ($(this).hasClass('no-can-do')) {
+      $(this).tooltip({placement: 'top', title: 'Et voi täyttää enää tätä lomaketta'})
+    }
+  })
+
+  /* Add popovers to form buttons */
+  $('.formlink > button').popover({html: true, delay: {show: 500, hide: 500}, trigger: 'manual'}).on('mouseenter', function () {
+      var _this = this
+      $(this).popover('show')
+      $('.popover').on('mouseleave', function () { $(_this).popover('hide') })
+      $('.tooltip-link').on('click', function () {
+        window.location.href = 'listaus/' + $(this).attr('id')
+      })
+    }).on('mouseleave', function () {
+      var _this = this;
+      setTimeout(function () {
+        if (!$('.popover:hover').length) { $(_this).popover('hide') }
+      }, 100)
+    })
+
+  {% if timeline_access %}
+  /* Get lab values for graph, use PSA for default */
+  UpdateVisualisation('P-PSA (4869) (ug/l)')
+
+  /* When page contents loaded, hide additional x-axes */
+  $('#lab_visualization')[0].childNodes[0].childNodes[2].style.display = 'none'
+  $('#epic_visualization')[0].childNodes[0].childNodes[2].style.display = 'none'
+
+  /* When page has loaded, set timeline zoom */
+  Timeline.setVisibleChartRangeAuto()
+  VisLabelSameWidth()
+  {% endif %}
+
+  $("[rel='tooltip']").tooltip()
+  $("[rel='tooltip-button']").tooltip({ html: true, delay: {show: 300, hide: 100} })
+})
+
+{% if timeline_access %}
+/* Prevent orphan tooltips to stay on page from item that gets clustered when mouse is scrolled */
+$('#timeline, #lab_visualization, #epic_visualization').bind('mousewheel', function() {
+  /*$('#timeline .tooltip').css('display', 'none')*/
+  $('.tooltip').removeClass('show')
+  $("[rel='tooltip']").tooltip()
+  $("[rel='tooltip-button']").tooltip({ html: true, delay: {show: 300, hide: 100} })
+})
+{% endif %}
+
+</script>
+{% endblock %}

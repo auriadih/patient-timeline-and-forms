@@ -1,0 +1,23 @@
+{% import "bootstrap/utils.html" as utils %}
+
+{% extends "base.html" %}
+
+{% block contents %}
+<div class="center">
+  <div class="confirmation-content">
+    <h1>Lomake tallennettu. Kiitos vastauksistasi!</h1><br>
+    <a href=# class='formlink' id='goback'><button type='button' id='cancel' class='btn btn-default' onclick="goBack();">Etusivulle</button></a>
+  </div>
+</div>
+
+<script>
+function goBack () {
+  window.location.href = '{{ default_page }}'
+}
+
+/* auto-redirect */
+$(document).ready(function () {
+  window.setTimeout(function () { goBack() }, 30000)
+})
+</script>
+{% endblock %}
