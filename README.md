@@ -8,9 +8,6 @@ A timeline view of patient events in health care, with dynamic forms on the side
 
 ![hoitoneuvottelu_form](https://user-images.githubusercontent.com/44465250/100464132-b0f5d400-30d5-11eb-857e-184e079623cf.PNG)
 
-## Repository still missing some bits
-
-Full code base for the installable software will be available by the end of 2020.
 
 ## General description of the software
 
