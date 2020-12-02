@@ -1,6 +1,6 @@
 # Demotools.py
 # ACI 2020-11-10
-# Functions here are stubs, returning some values so application installationcan be tested
+# Functions here are stubs, returning some values so application installation can be tested
 
 def ad_login(username, password):
     """Implement your own authentication, returning status code 200
