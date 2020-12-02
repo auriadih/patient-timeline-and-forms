@@ -100,7 +100,7 @@ def gather_answers(fetchable, this_form_parent, this_form, row, form_nature, def
         # get answers
         if form_nature == "new":
             # subquery to filter only passable fields
-            # etsi tämän formin sisarukset, jotka sisältävät tämän fieldin
+            # find the siblings of this form that contain this field
             sub_fields = DB.session.query(FormElements)\
                 .filter((FormElements.field_id == row['field_id'])\
                     & (FormElements.parent_form_id == this_form_parent)\
@@ -283,7 +283,7 @@ def generate_form(lomake_id, fill_type, vastaukset_id=None):
         + "show_field, "\
         + "is_event_ts_field"
         + " from " + FORMIT + ".get_all_fields_to_show_aggregated(" + str(session['person_id']) + ", " + str(session['filling_form']) + ");")
-    # vanhan get_all_fields_to_show() funktion kentät
+    # OBSOLETE:  vanhan get_all_fields_to_show() funktion kentät
     #        + "determining_form_field_id, "\
     #        + "determining_choice_id, "\
 
@@ -416,7 +416,7 @@ def generate_form(lomake_id, fill_type, vastaukset_id=None):
             if row['determining_form_fields_and_choices'] is not None:
                 field_rendering.append("'determining_field': '" + str(row['determining_form_fields_and_choices']) + "'")
 
-            # vanha get_all_fields_to_show() funktion palauttama datamuoto
+            # OBSOLETE: vanha get_all_fields_to_show() funktion palauttama datamuoto
             #if row['determining_form_field_id'] is not None:
             #    field_rendering.append("'determining_field': '" + str(row['determining_form_field_id']) + "'")
             #if row['determining_choice_id'] is not None:
