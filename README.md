@@ -32,6 +32,8 @@ The timeline shows patient data elements visualised according to category such a
 
 The form functionality allows users such as patients or doctors to fill in tailored questionnaires, the results of which will be visualised on the timeline.
 
+Since the form data model is designed for data entry on customized forms, the repository includes a workflow for converting the data from this narrow input format to a wider format more suitable for data analysis. In the analytics format, each user group gets a schema where each of their forms becomes a table and each field becomes one or more columns in that table. This conversion process is programmed with Pentaho Data Integration and is found in the directory db/analytics. The main job to run to generate the analytics data format is db/analytics/main_update_analytics.kjb, for which the configuration parameters should be given in db/analytics/config/example_config.parameters.
+
 ### Authentication and authorization
 
 
